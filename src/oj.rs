@@ -8,16 +8,23 @@ pub fn main_battle(
     deft : i32,
     evdt : i32,
 )  -> String {
+    let mut txt = String::new();
+
 
     // 单次开战
+    let once_result = battle_once(atk, hp, def, evd, atkt, hpt, deft, evdt);
+    txt += &format!("击杀率 : {:.2}\n", once_result.kill_rate);
+    txt += &format!("反杀率 : {:.2}\n", once_result.be_kill_rate);
+    txt += &format!("残余血量（双方均幸存时） : {:.1} / {:.1}\n", once_result.you_alive_remain_hp, once_result.opp_alive_remain_hp);
+
 
     // 开展有利度
-    let mut txt = String::new();
+    
     let decay = 0.5;
     let result = fb_decay(atk, hp, def, evd, atkt, hpt, deft, evdt, decay);
 
     let r = result.last().unwrap().last().unwrap().0;
-    txt += &format!("开战有利度 : {}", (r*100.0).round()/100.0);
+    txt += &format!("开战有利度 : {}\n", (r*100.0).round()/100.0);
 
     txt
 }
@@ -38,12 +45,11 @@ fn battle_once(
     hpt : i32,
     deft : i32,
     evdt : i32,
-    decay : f32,
 ) -> ButtleOnceInfo {
     let hp_distt = onceatk(atk, hpt, deft, evdt);
     let kill = *hp_distt.data.get(0).unwrap();
     let mut remain_hpt = 0. ;
-    if kill.round() as i32 != 1{
+    if (kill * 100.).round() as i32 != 100 {
         for (hpt, r) in hp_distt.data.iter().enumerate() {
             remain_hpt += (hpt as f32) * r;
         }
@@ -51,17 +57,17 @@ fn battle_once(
     }
 
     let hp_dist = onceatk(atkt, hp, def, evd);
-    let be_kill: f32 = (1.0 - kill) * *hp_dist.data.get(0).unwrap();
+    let be_kill: f32 = *hp_dist.data.get(0).unwrap();
     let mut remain_hp = 0. ;
-    if be_kill.round() as i32 != 1{
+    if (be_kill * 100.).round() as i32 != 100 {
         for (hp, r) in hp_dist.data.iter().enumerate() {
             remain_hp += (hp as f32) * r;
         }
-        remain_hp /= 1. - kill;
+        remain_hp /= 1. - be_kill;
     }
     ButtleOnceInfo{
         kill_rate: kill,
-        be_kill_rate: be_kill,
+        be_kill_rate: be_kill * (1.0 - kill),
         you_alive_remain_hp: remain_hp,
         opp_alive_remain_hp: remain_hpt,
     }
@@ -117,27 +123,6 @@ fn fb_decay(
     result
 }
 
-fn be_atk_expect_turn(
-    atk : i32,
-    hp : i32,
-    def : i32,
-    evd : i32,
-) -> HpDist {
-    let mut result = HpDist::new();
-    for h in 1..(hp+1) {
-        let hpd = onceatk(atk, h, def, evd);
-        let mut expect = 1.0;
-        for (i, r) in hpd.data.iter().enumerate() {
-            if i == h as usize {
-                expect = expect / (1.0 - r);
-            }else{
-            expect += result.data.get(i).unwrap() * r;
-            }
-        }
-        result.insert(h, expect);
-    }
-    result
-}
 
 fn onceatk(
     atk : i32,
@@ -233,7 +218,7 @@ impl HpDist {
         let len = self.data.len() as i32;
         let diff = hp + 1 - len;
         if diff > 0 {
-            for i in 0..diff {
+            for _ in 0..diff {
                 self.data.push(0.)
             }
         }
@@ -241,12 +226,12 @@ impl HpDist {
         *self.data.get_mut(i).unwrap() += rate;
     }
 
-    fn show(&self) {
-        for (i, r) in self.data.iter().enumerate() {
-            let num = (r * 100.).round() / 100.0;
-            println!("{} : {:.2}", i, num);
-        }
-    }
+    // fn show(&self) {
+    //     for (i, r) in self.data.iter().enumerate() {
+    //         let num = (r * 100.).round() / 100.0;
+    //         println!("{} : {:.2}", i, num);
+    //     }
+    // }
 }
 
 impl std::ops::Mul<f32> for HpDist {
