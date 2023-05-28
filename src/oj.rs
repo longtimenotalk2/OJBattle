@@ -1,3 +1,5 @@
+use crate::BattleResult;
+
 pub fn main_battle(
     hp : i32,
     atk : i32,
@@ -7,26 +9,23 @@ pub fn main_battle(
     atkt : i32,
     deft : i32,
     evdt : i32,
-)  -> String {
-    let mut txt = String::new();
-
+)  -> BattleResult {
 
     // 单次开战
     let once_result = battle_once(atk, hp, def, evd, atkt, hpt, deft, evdt);
-    txt += &format!("击杀率 : {:.2}\n", once_result.kill_rate);
-    txt += &format!("反杀率 : {:.2}\n", once_result.be_kill_rate);
-    txt += &format!("残余血量（双方均幸存时） : {:.1} / {:.1}\n", once_result.you_alive_remain_hp, once_result.opp_alive_remain_hp);
 
-
-    // 开展有利度
-    
+    // 开战有利度
     let decay = 0.5;
     let result = fb_decay(atk, hp, def, evd, atkt, hpt, deft, evdt, decay);
-
     let r = result.last().unwrap().last().unwrap().0;
-    txt += &format!("开战有利度 : {}\n", (r*100.0).round()/100.0);
 
-    txt
+    BattleResult{
+        kill_rate : once_result.kill_rate,
+        be_kill_rate : once_result.be_kill_rate,
+        you_alive_remain_hp : once_result.you_alive_remain_hp,
+        opp_alive_remain_hp : once_result.opp_alive_remain_hp,
+        fb_decay: r
+    }
 }
 
 struct ButtleOnceInfo {
