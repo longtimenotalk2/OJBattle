@@ -1,16 +1,35 @@
-use actix_web::{get, web, App, HttpServer, Result};
+//http://127.0.0.1:8080/battle/4/1/1/-1/4/0/0/1
 
-/// extract path info from "/users/{user_id}/{friend}" url
-/// {user_id} - deserializes to a u32
-/// {friend} - deserializes to a String
-#[get("/users/{user_id}/{friend}")] // <- define path parameters
-async fn index(path: web::Path<(u32, String)>) -> Result<String> {
-    let (user_id, friend) = path.into_inner();
-    Ok(format!("Welcome {}, user_id {}!", friend, user_id))
+pub mod oj;
+
+use actix_web::{get, web, Result};
+use serde::Deserialize;
+
+use crate::oj::main_battle;
+
+#[derive(Deserialize)]
+struct Info {
+    hp : i32,
+    atk : i32,
+    def : i32,
+    evd : i32,
+    hpt : i32,
+    atkt : i32,
+    deft : i32,
+    evdt : i32,
+}
+
+/// extract path info using serde
+#[get("/battle/{hp}/{atk}/{def}/{evd}/{hpt}/{atkt}/{deft}/{evdt}")] // <- define path parameters
+async fn index(info: web::Path<Info>) -> Result<String> {
+    let txt = main_battle(info.hp, info.atk, info.def, info.evd, info.hpt, info.atkt, info.deft, info.evdt);
+    Ok(txt)
 }
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    use actix_web::{App, HttpServer};
+
     HttpServer::new(|| App::new().service(index))
         .bind(("127.0.0.1", 8080))?
         .run()
