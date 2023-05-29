@@ -7,12 +7,27 @@
 
 
 pub mod oj;
+use crate::oj::main_battle;
+
+// fn main() {
+//     println!("{}", main_battle(
+//         5,
+//         -1,
+//         -1,
+//         2,
+//         5,
+//         -1,
+//         -1,
+//         2,
+//     ))
+// }
+
 
 use std::env;
 use actix_web::{get, web, Result};
 use serde::Deserialize;
 
-use crate::oj::main_battle;
+
 
 #[derive(Deserialize)]
 struct Info {
@@ -47,7 +62,7 @@ async fn main() -> std::io::Result<()> {
     use actix_web::{App, HttpServer};
 
     HttpServer::new(|| App::new().service(index))
-        .bind(("127.0.0.1", port))?
+        .bind(("0.0.0.0", port))?
         .run()
         .await
 }
