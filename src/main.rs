@@ -1,7 +1,14 @@
-//http://127.0.0.1:8080/battle/4/1/1/-1/4/0/0/1
+//git push -u origin main
+
+
+//cargo run -- -p [port]
+//http://127.0.0.1:[port]/battle/4/1/1/-1/4/0/0/1
+
+
 
 pub mod oj;
 
+use std::env;
 use actix_web::{get, web, Result};
 use serde::Deserialize;
 
@@ -28,10 +35,19 @@ async fn index(info: web::Path<Info>) -> Result<String> {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    let args: Vec<String> = env::args().collect();
+
+    let mut port_str = String::from("8080");
+    for i in 1..args.len() {
+        if args[i] == "-p" {
+            port_str = String::from(&args[i + 1]);
+        }
+    }
+    let port : u16 = port_str.parse().unwrap();
     use actix_web::{App, HttpServer};
 
     HttpServer::new(|| App::new().service(index))
-        .bind(("127.0.0.1", 8080))?
+        .bind(("127.0.0.1", port))?
         .run()
         .await
 }
