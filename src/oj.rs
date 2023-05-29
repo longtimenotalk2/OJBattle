@@ -1,4 +1,13 @@
-use crate::BattleResult;
+pub struct BattleResult {
+    pub kill_rate : f32,
+    pub be_kill_rate : f32,
+    pub you_alive_remain_hp : f32,
+    pub opp_alive_remain_hp : f32,
+    pub fb_10_win : f32,
+    pub fb_10_draw : f32,
+    pub fb_10_lose : f32,
+    pub challenge_advantage : f32,
+}
 
 pub fn main_battle(
     hp : i32,
@@ -14,18 +23,106 @@ pub fn main_battle(
     // 单次开战
     let once_result = battle_once(atk, hp, def, evd, atkt, hpt, deft, evdt);
 
+    let kill_rate = (once_result.kill_rate * 100.0).round() / 100.0;
+    let be_kill_rate = (once_result.be_kill_rate * 100.0).round() / 100.0;
+    let you_alive_remain_hp =  (once_result.you_alive_remain_hp * 10.0).round() / 10.0;
+    let opp_alive_remain_hp = (once_result.opp_alive_remain_hp * 10.0).round() / 10.0;
+
+    // 最终决战
+    let (fbwin, fblose) = fb_10(atk, hp, def, evd, atkt, hpt, deft, evdt);
+    let fb_10_win = (fbwin * 100.0).round() / 100.0;
+    let fb_10_lose = (fblose * 100.0).round() / 100.0;
+    let fb_10_draw = (1.0 - fb_10_win - fb_10_lose).max(0.0);
+
+
     // 开战有利度
     let decay = 0.5;
     let result = fb_decay(atk, hp, def, evd, atkt, hpt, deft, evdt, decay);
     let r = result.last().unwrap().last().unwrap().0;
+    let challenge_advantage = (r*100.0).round()/100.0;
+
 
     BattleResult{
-        kill_rate : once_result.kill_rate,
-        be_kill_rate : once_result.be_kill_rate,
-        you_alive_remain_hp : once_result.you_alive_remain_hp,
-        opp_alive_remain_hp : once_result.opp_alive_remain_hp,
-        fb_decay: r
+        kill_rate,
+        be_kill_rate,
+        you_alive_remain_hp,
+        opp_alive_remain_hp,
+        fb_10_win,
+        fb_10_draw,
+        fb_10_lose,
+        challenge_advantage,
+        
     }
+}
+
+fn fb_10(
+    atk : i32,
+    hp : i32,
+    def : i32,
+    evd : i32,
+    atkt : i32,
+    hpt : i32,
+    deft : i32,
+    evdt : i32,
+) -> (f32, f32) {
+    // init
+    let mut stat : Vec<Vec<(f32, f32)>> = vec!();
+    for h in 0..(hp+1) {
+        let mut newvec = vec!();
+        for ht in 0..(hpt+1) {
+            let left = if ht == 0 {
+                1.0
+            }else{
+                0.0
+            };
+            let right = if h == 0 {
+                1.0
+            }else{
+                0.0
+            };
+            newvec.push((left, right));
+        }
+        stat.push(newvec);
+    }
+
+    for _ in 0..10 {
+        let mut stat_next = stat.clone();
+        // opp hit you
+        for h in 1..hp+1 {
+            let ih : usize = h.try_into().unwrap();
+            for ht in 1..hpt+1 {
+                let iht : usize = ht.try_into().unwrap();
+                let hp_dist = onceatk(atkt, h, def, evd);
+                let mut result = (0.0, 0.0);
+                for (hh, r) in hp_dist.data.iter().enumerate() {
+                    result.0 += stat[hh][iht].0 * r;
+                    result.1 += stat[hh][iht].1 * r;
+                }
+                stat_next[ih][iht] = result;
+            }
+        }
+        stat = stat_next.clone();
+
+        // you hit opp
+        for h in 1..hp+1 {
+            let ih : usize = h.try_into().unwrap();
+            for ht in 1..hpt+1 {
+                let iht : usize = ht.try_into().unwrap();
+                let hp_distt = onceatk(atk, ht, deft, evdt);
+                let mut result = (0.0, 0.0);
+                for (hht, r) in hp_distt.data.iter().enumerate() {
+                    result.0 += stat[ih][hht].0 * r;
+                    result.1 += stat[ih][hht].1 * r;
+                }
+                stat_next[ih][iht] = result;
+            }
+        }
+
+        stat = stat_next
+    }
+
+    
+    stat.last().unwrap().last().unwrap().clone()
 }
 
 struct ButtleOnceInfo {
