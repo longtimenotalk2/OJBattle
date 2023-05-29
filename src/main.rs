@@ -14,11 +14,11 @@
 
 
 pub mod oj;
-use crate::oj::main_battle;
+use crate::oj::{main_battle};
 
 
 use std::env;
-// use actix_web::Responder;
+use actix_web::{Responder, HttpResponse};
 use actix_web::{get, web, Result};
 use serde::Deserialize;
 use serde::Serialize;
@@ -35,17 +35,19 @@ struct Info {
     atkt : i32,
     deft : i32,
     evdt : i32,
-    format : Option<String>
 }
 
-#[derive(Serialize)]
-pub struct BattleResult {
-    kill_rate : f32,
-    be_kill_rate : f32,
-    you_alive_remain_hp : f32,
-    opp_alive_remain_hp : f32,
-    fb_decay: f32
+#[derive(Debug, Serialize, Deserialize)]
+pub struct BattleResponse { 
+    pub be_kill_rate : f32,
+    pub you_alive_remain_hp : f32,
+    pub opp_alive_remain_hp : f32,
+    pub fb_10_win : f32,
+    pub fb_10_draw : f32,
+    pub fb_10_lose : f32,
+    pub challenge_advantage : f32,
 }
+
 
 #[get("/battle")]
 async fn index(info: web::Query<Info>) -> Result<String> {
@@ -59,17 +61,30 @@ async fn index(info: web::Query<Info>) -> Result<String> {
     Ok(txt)
 }
 
-// web api with JsonResponse
-// #[get("/apis/battle")]
-// async fn api(info: web::Json<Info>) -> impl Responder {
-//     if info.format.is_none()||info.format.clone().unwrap().eq("json") {
-//         let txt = main_battle(info.hp, info.atk, info.def, info.evd, info.hpt, info.atkt, info.deft, info.evdt);
-        
-//         Ok(txt.into())
-//     } else {
-//         panic!("unknown format");
-//     }
-// }
+struct BattleRequest {
+    hp : i32,
+    atk : i32,
+    def : i32,
+    evd : i32,
+    hpt : i32,
+    atkt : i32,
+    deft : i32,
+    evdt : i32,
+}
+
+async fn api(input: web::Json<BattleRequest>) -> impl Responder {
+    let result = main_battle(input.hp, input.atk, input.def, input.evd, input.hpt, input.atkt, input.deft, input.evdt);
+    let response = BattleResponse {
+        be_kill_rate: result.be_kill_rate,
+        you_alive_remain_hp: result.you_alive_remain_hp,
+        opp_alive_remain_hp: result.opp_alive_remain_hp,
+        fb_10_win: result.fb_10_win,
+        fb_10_draw: result.fb_10_draw,
+        fb_10_lose: result.fb_10_lose,
+        challenge_advantage: result.challenge_advantage,
+    };
+    HttpResponse::Ok().json(response)
+}
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -89,4 +104,5 @@ async fn main() -> std::io::Result<()> {
         .bind(("127.0.0.1", port))?
         .run()
         .await
+
 }
