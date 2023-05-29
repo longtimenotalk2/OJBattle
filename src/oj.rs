@@ -1,3 +1,14 @@
+pub struct BattleResult {
+    pub kill_rate : f32,
+    pub be_kill_rate : f32,
+    pub you_alive_remain_hp : f32,
+    pub opp_alive_remain_hp : f32,
+    pub fb_10_win : f32,
+    pub fb_10_draw : f32,
+    pub fb_10_lose : f32,
+    pub challenge_advantage : f32,
+}
+
 pub fn main_battle(
     hp : i32,
     atk : i32,
@@ -7,33 +18,41 @@ pub fn main_battle(
     atkt : i32,
     deft : i32,
     evdt : i32,
-)  -> String {
-    let mut txt = String::new();
-
+)  -> BattleResult {
 
     // 单次开战
     let once_result = battle_once(atk, hp, def, evd, atkt, hpt, deft, evdt);
-    txt += &format!("击杀率 : {:.2}\n", once_result.kill_rate);
-    txt += &format!("反杀率 : {:.2}\n", once_result.be_kill_rate);
-    txt += &format!("残余血量（双方均幸存时） : {:.1} / {:.1}\n", once_result.you_alive_remain_hp, once_result.opp_alive_remain_hp);
+
+    let kill_rate = (once_result.kill_rate * 100.0).round() / 100.0;
+    let be_kill_rate = (once_result.be_kill_rate * 100.0).round() / 100.0;
+    let you_alive_remain_hp =  (once_result.you_alive_remain_hp * 10.0).round() / 10.0;
+    let opp_alive_remain_hp = (once_result.opp_alive_remain_hp * 10.0).round() / 10.0;
 
     // 最终决战
     let (fbwin, fblose) = fb_10(atk, hp, def, evd, atkt, hpt, deft, evdt);
-    let fbwin100 = (fbwin * 100.0).round() / 100.0;
-    let fblose100 = (fblose * 100.0).round() / 100.0;
-    let fbdraw = (1.0 - fbwin100 - fblose100).max(0.0);
-    txt += &format!("最终决战（10回合，胜/平/负） : {:.2} / {:.2} / {:.2}\n", fbwin, fbdraw, fblose);
+    let fb_10_win = (fbwin * 100.0).round() / 100.0;
+    let fb_10_lose = (fblose * 100.0).round() / 100.0;
+    let fb_10_draw = (1.0 - fb_10_win - fb_10_lose).max(0.0);
 
 
     // 开战有利度
-    
     let decay = 0.5;
     let result = fb_decay(atk, hp, def, evd, atkt, hpt, deft, evdt, decay);
-
     let r = result.last().unwrap().last().unwrap().0;
-    txt += &format!("开战有利度 : {:.2}\n", (r*100.0).round()/100.0);
+    let challenge_advantage = (r*100.0).round()/100.0;
 
-    txt
+
+    BattleResult{
+        kill_rate,
+        be_kill_rate,
+        you_alive_remain_hp,
+        opp_alive_remain_hp,
+        fb_10_win,
+        fb_10_draw,
+        fb_10_lose,
+        challenge_advantage,
+        
+    }
 }
 
 fn fb_10(
