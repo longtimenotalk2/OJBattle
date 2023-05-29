@@ -17,16 +17,93 @@ pub fn main_battle(
     txt += &format!("反杀率 : {:.2}\n", once_result.be_kill_rate);
     txt += &format!("残余血量（双方均幸存时） : {:.1} / {:.1}\n", once_result.you_alive_remain_hp, once_result.opp_alive_remain_hp);
 
+    // 最终决战
+    let (fbwin, fblose) = fb_10(atk, hp, def, evd, atkt, hpt, deft, evdt);
+    let fbwin100 = (fbwin * 100.0).round() / 100.0;
+    let fblose100 = (fblose * 100.0).round() / 100.0;
+    let fbdraw = (1.0 - fbwin100 - fblose100).max(0.0);
+    txt += &format!("最终决战（10回合，胜/平/负） : {:.2} / {:.2} / {:.2}\n", fbwin, fbdraw, fblose);
 
-    // 开展有利度
+
+    // 开战有利度
     
     let decay = 0.5;
     let result = fb_decay(atk, hp, def, evd, atkt, hpt, deft, evdt, decay);
 
     let r = result.last().unwrap().last().unwrap().0;
-    txt += &format!("开战有利度 : {}\n", (r*100.0).round()/100.0);
+    txt += &format!("开战有利度 : {:.2}\n", (r*100.0).round()/100.0);
 
     txt
+}
+
+fn fb_10(
+    atk : i32,
+    hp : i32,
+    def : i32,
+    evd : i32,
+    atkt : i32,
+    hpt : i32,
+    deft : i32,
+    evdt : i32,
+) -> (f32, f32) {
+    // init
+    let mut stat : Vec<Vec<(f32, f32)>> = vec!();
+    for h in 0..(hp+1) {
+        let mut newvec = vec!();
+        for ht in 0..(hpt+1) {
+            let left = if ht == 0 {
+                1.0
+            }else{
+                0.0
+            };
+            let right = if h == 0 {
+                1.0
+            }else{
+                0.0
+            };
+            newvec.push((left, right));
+        }
+        stat.push(newvec);
+    }
+
+    for _ in 0..10 {
+        let mut stat_next = stat.clone();
+        // opp hit you
+        for h in 1..hp+1 {
+            let ih : usize = h.try_into().unwrap();
+            for ht in 1..hpt+1 {
+                let iht : usize = ht.try_into().unwrap();
+                let hp_dist = onceatk(atkt, h, def, evd);
+                let mut result = (0.0, 0.0);
+                for (hh, r) in hp_dist.data.iter().enumerate() {
+                    result.0 += stat[hh][iht].0 * r;
+                    result.1 += stat[hh][iht].1 * r;
+                }
+                stat_next[ih][iht] = result;
+            }
+        }
+        stat = stat_next.clone();
+
+        // you hit opp
+        for h in 1..hp+1 {
+            let ih : usize = h.try_into().unwrap();
+            for ht in 1..hpt+1 {
+                let iht : usize = ht.try_into().unwrap();
+                let hp_distt = onceatk(atk, ht, deft, evdt);
+                let mut result = (0.0, 0.0);
+                for (hht, r) in hp_distt.data.iter().enumerate() {
+                    result.0 += stat[ih][hht].0 * r;
+                    result.1 += stat[ih][hht].1 * r;
+                }
+                stat_next[ih][iht] = result;
+            }
+        }
+
+        stat = stat_next
+    }
+
+    
+    stat.last().unwrap().last().unwrap().clone()
 }
 
 struct ButtleOnceInfo {
