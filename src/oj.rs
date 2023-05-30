@@ -40,7 +40,6 @@ pub fn main_battle(
 
     let challenge_advantage = (r*100.0).round()/100.0;
 
-
     BattleResult{
         kill_rate,
         be_kill_rate,

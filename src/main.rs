@@ -4,16 +4,20 @@
 *   optional with &format=json
 **/
 
+//cargo run -- -p [port]
+//http://127.0.0.1:[port]/battle/4/1/1/-1/4/0/0/1
+
+
 pub mod oj;
 use crate::oj::{main_battle};
 
 
 use std::env;
 use actix_web::{Responder, HttpResponse};
-
 use actix_web::{get, web, Result};
 use serde::Deserialize;
 use serde::Serialize;
+
 
 #[derive(Deserialize)]
 struct Info {
