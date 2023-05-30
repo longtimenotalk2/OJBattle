@@ -5,19 +5,12 @@
 *   optional with &format=json
 **/
 
-//git push -u origin main
-
-
-//cargo run -- -p [port]
-//http://127.0.0.1:[port]/battle/4/1/1/-1/4/0/0/1
-
-
 
 pub mod oj;
 use crate::oj::{main_battle};
 
 
-use actix_web::{Responder, HttpResponse};
+use actix_web::HttpResponse;
 use actix_web::{get, web, Result};
 use serde::Deserialize;
 use serde::Serialize;
@@ -60,18 +53,8 @@ async fn index(info: web::Query<Info>) -> Result<String> {
     Ok(txt)
 }
 
-struct BattleRequest {
-    hp : i32,
-    atk : i32,
-    def : i32,
-    evd : i32,
-    hpt : i32,
-    atkt : i32,
-    deft : i32,
-    evdt : i32,
-}
-
-async fn api(input: web::Json<BattleRequest>) -> impl Responder {
+#[get("/apis/battle")]
+async fn api(input: web::Query<Info>) -> Result<HttpResponse> {
     let result = main_battle(input.hp, input.atk, input.def, input.evd, input.hpt, input.atkt, input.deft, input.evdt);
     let response = BattleResponse {
         be_kill_rate: result.be_kill_rate,
@@ -82,7 +65,7 @@ async fn api(input: web::Json<BattleRequest>) -> impl Responder {
         fb_10_lose: result.fb_10_lose,
         challenge_advantage: result.challenge_advantage,
     };
-    HttpResponse::Ok().json(response)
+    Ok(HttpResponse::Ok().json(response))
 }
 
 #[derive(Parser)]
@@ -100,9 +83,12 @@ async fn main() -> std::io::Result<()> {
 
     println!("listening on : 0.0.0.0:{port}");
 
-    HttpServer::new(|| App::new().service(index))
+    HttpServer::new(|| {
+        App::new()
+        .service(index)
+        .service(api)
+    })
         .bind(("127.0.0.1", port))?
         .run()
         .await
-
 }
