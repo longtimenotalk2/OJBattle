@@ -34,11 +34,10 @@ pub fn main_battle(
     let fb_10_lose = (fblose * 100.0).round() / 100.0;
     let fb_10_draw = (1.0 - fb_10_win - fb_10_lose).max(0.0);
 
-
-    // 开战有利度
     let decay = 0.5;
     let result = fb_decay(atk, hp, def, evd, atkt, hpt, deft, evdt, decay);
     let r = result.last().unwrap().last().unwrap().0;
+
     let challenge_advantage = (r*100.0).round()/100.0;
 
 
@@ -124,6 +123,8 @@ fn fb_10(
     
     stat.last().unwrap().last().unwrap().clone()
 }
+
+
 
 struct ButtleOnceInfo {
     kill_rate : f32,
