@@ -47,6 +47,7 @@ pub struct BattleResponse {
 async fn index(info: web::Query<Info>) -> Result<String> {
     let mut txt = String::new();
     let br = main_battle(info.hp, info.atk, info.def, info.evd, info.hpt, info.atkt, info.deft, info.evdt);
+    txt += &format!("【{}{}{}{} vs {}{}{}{}】 （Hp/Atk/Def/Evd）\n", info.hp, info.atk, info.def, info.evd, info.hpt, info.atkt, info.deft, info.evdt);
     txt += &format!("击杀率 : {:.2}\n", br.kill_rate);
     txt += &format!("反杀率 : {:.2}\n", br.be_kill_rate);
     txt += &format!("残余血量（双方均幸存时） : {:.1} / {:.1}\n", br.you_alive_remain_hp, br.opp_alive_remain_hp);
