@@ -1,23 +1,27 @@
+
 /**
 *   test instance in http://127.0.0.1:8080/battle?hp=4&atk=1&def=1&evd=-1&hpt=4&atkt=0&deft=0&evdt=1
 *   api in http://127.0.0.1:8080/apis/battle?hp=4&atk=1&def=1&evd=-1&hpt=4&atkt=0&deft=0&evdt=1
 *   optional with &format=json
 **/
 
+//git push -u origin main
+
+
 //cargo run -- -p [port]
 //http://127.0.0.1:[port]/battle/4/1/1/-1/4/0/0/1
+
 
 
 pub mod oj;
 use crate::oj::{main_battle};
 
 
-use std::env;
 use actix_web::{Responder, HttpResponse};
 use actix_web::{get, web, Result};
 use serde::Deserialize;
 use serde::Serialize;
-
+use clap::Parser;
 
 #[derive(Deserialize)]
 struct Info {
@@ -80,19 +84,20 @@ async fn api(input: web::Json<BattleRequest>) -> impl Responder {
     HttpResponse::Ok().json(response)
 }
 
+#[derive(Parser)]
+struct Opts {
+    #[arg(short = 'p', long)]
+    port: Option<u16>,
+}
+
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let args: Vec<String> = env::args().collect();
-
-    let mut port_str = String::from("8080");
-    for i in 1..args.len() {
-        if args[i] == "-p" {
-            port_str = String::from(&args[i + 1]);
-        }
-    }
-    let port : u16 = port_str.parse().unwrap();
+    let opts: Opts = Opts::parse();
+    let port : u16 = opts.port.unwrap_or(8080);
     use actix_web::{App, HttpServer};
 
+    println!("listening on : 0.0.0.0:{port}");
 
     HttpServer::new(|| App::new().service(index))
         .bind(("127.0.0.1", port))?
