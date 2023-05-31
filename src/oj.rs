@@ -14,12 +14,14 @@ pub struct BattleResult {
 #[derive(Deserialize, Debug, Clone, Copy)]
 pub enum Passive {
     Iru,
+    Tql,
 }
 
 impl Passive {
     pub fn str(&self) -> &str {
         match self {
             Passive::Iru => "Iru",
+            Passive::Tql => "Tql",
         }
     }
 }
@@ -92,6 +94,7 @@ fn fb_10(
                 hpt -= 1;
                 psv = None;
             },
+            _other => {},
         }
     }
 
@@ -100,6 +103,7 @@ fn fb_10(
             Passive::Iru => {
                 psvt = None;
             },
+            _other => {},
         }
     }
     
@@ -190,6 +194,7 @@ fn battle_once(
             Passive::Iru => {
                 psvt = None;
             },
+            _other => {},
         }
     }
 
@@ -203,7 +208,20 @@ fn battle_once(
         remain_hpt /= 1. - kill;
     }
 
-    let hp_dist = onceatk(atkt, hp, def, evd, psvt, psv);
+    let mut hp_dist = onceatk(atkt, hp, def, evd, psvt, psv);
+
+    if let Some(Passive::Tql) = psvt {
+        if (kill * 100.).round() as i32 != 100 {
+            hp_dist.data = vec![0.0];
+            for (ht, r) in hp_distt.data.iter().enumerate() {
+                if ht != 0 {
+                    hp_dist += onceatk(atkt + hpt - (ht as i32), hp, def, evd, psvt, psv) * *r;
+                }
+            }
+            hp_dist = hp_dist * (1. / (1. - kill));
+        }
+    }
+
     let be_kill: f32 = *hp_dist.data.get(0).unwrap();
     let mut remain_hp = 0. ;
     if (be_kill * 100.).round() as i32 != 100 {
@@ -239,6 +257,7 @@ fn fb_decay(
             Passive::Iru => {
                 psvt = None;
             },
+            _other => {},
         }
     }
     
@@ -326,7 +345,7 @@ fn oncedef(
     hp : i32,
     def : i32,
     psv : Option<Passive>,
-    psvt : Option<Passive>,
+    _psvt : Option<Passive>,
 ) -> HpDist {
     let mut result = HpDist::new();
     for dice in 1..7 {
@@ -348,7 +367,7 @@ fn onceevd(
     hp : i32,
     evd : i32,
     psv : Option<Passive>,
-    psvt : Option<Passive>,
+    _psvt : Option<Passive>,
 ) -> HpDist {
     let mut result = HpDist::new();
     for dice in 1..7 {
@@ -366,7 +385,7 @@ fn onceevd(
     result
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct HpDist {
     data : Vec<f32>,
 }

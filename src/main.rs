@@ -10,46 +10,73 @@ pub mod oj;
 use crate::oj::{main_battle};
 use oj::Passive;
 
-// fn main() {
-//     // let psv = None;
-//     let psv = Some(Passive::Iru);
-//     let psvt = None;
-//     // let psvt = Some(Passive::Iru);
+fn main() {
+    let psv = None;
+    // let psv = Some(Passive::Tql);
+    // let psvt = None;
+    let psvt = Some(Passive::Tql);
 
-//     let hp = 5;
-//     let atk = 0;
-//     let def = 0;
-//     let evd = 0;
-//     let hpt = 4;
-//     let atkt = 1;
-//     let deft = -1;
-//     let evdt = 2;
+    let hp = 9;
+    let atk = 0;
+    let def = 0;
+    let evd = 0;
+    let hpt = 5;
+    let atkt = 0;
+    let deft = 0;
+    let evdt = 0;
 
-//     let br = main_battle(
-//         hp,
-//         atk,
-//         def,
-//         evd,
-//         psv,
-//         hpt,
-//         atkt,
-//         deft,
-//         evdt,
-//         psvt,
-//     );
+    let br = main_battle(
+        hp,
+        atk,
+        def,
+        evd,
+        psv,
+        hpt,
+        atkt,
+        deft,
+        evdt,
+        psvt,
+    );
 
-//     let mut txt = String::new();
-//     let psvstr = if let Some(ps) = psv {format!(" ({})", ps.str())} else {format!("")};
-//     let psvtstr = if let Some(pst) = psvt {format!(" ({})", pst.str())} else {format!("")};
-//     txt += &format!("【{}{}{}{}{} vs {}{}{}{}{}】 （Hp/Atk/Def/Evd）\n", hp, atk, def, evd, psvstr, hpt, atkt, deft, evdt, psvtstr);
-//     txt += &format!("击杀率 : {:.2}\n", br.kill_rate);
-//     txt += &format!("反杀率 : {:.2}\n", br.be_kill_rate);
-//     txt += &format!("残余血量（双方均幸存时） : {:.1} / {:.1}\n", br.you_alive_remain_hp, br.opp_alive_remain_hp);
-//     txt += &format!("最终决战（10回合，胜/平/负） : {:.2} / {:.2} / {:.2}\n", br.fb_10_win, br.fb_10_draw, br.fb_10_lose);
-//     txt += &format!("开战有利度 : {:.2}\n", br.challenge_advantage);
+    let mut txt = String::new();
+    let psvstr = if let Some(ps) = psv {format!(" ({})", ps.str())} else {format!("")};
+    let psvtstr = if let Some(pst) = psvt {format!(" ({})", pst.str())} else {format!("")};
+    txt += &format!("【{}{}{}{}{} vs {}{}{}{}{}】 （Hp/Atk/Def/Evd）\n", hp, atk, def, evd, psvstr, hpt, atkt, deft, evdt, psvtstr);
+    txt += &format!("击杀率 : {:.2}\n", br.kill_rate);
+    txt += &format!("反杀率 : {:.2}\n", br.be_kill_rate);
+    txt += &format!("残余血量（双方均幸存时） : {:.1} / {:.1}\n", br.you_alive_remain_hp, br.opp_alive_remain_hp);
+    txt += &format!("最终决战（10回合，胜/平/负） : {:.2} / {:.2} / {:.2}\n", br.fb_10_win, br.fb_10_draw, br.fb_10_lose);
+    txt += &format!("开战有利度 : {:.2}\n", br.challenge_advantage);
 
-//     println!("{}", txt);
-// }
+    println!("{}", txt);
+
+    let psv = None;
+    let psvt = None;
+    let br = main_battle(
+        hp,
+        atk,
+        def,
+        evd,
+        psv,
+        hpt,
+        atkt,
+        deft,
+        evdt,
+        psvt,
+    );
+    
+    let mut txt = String::new();
+    let psvstr = if let Some(ps) = psv {format!(" ({})", ps.str())} else {format!("")};
+    let psvtstr = if let Some(pst) = psvt {format!(" ({})", pst.str())} else {format!("")};
+    txt += &format!("【{}{}{}{}{} vs {}{}{}{}{}】 （Hp/Atk/Def/Evd）\n", hp, atk, def, evd, psvstr, hpt, atkt, deft, evdt, psvtstr);
+    txt += &format!("击杀率 : {:.2}\n", br.kill_rate);
+    txt += &format!("反杀率 : {:.2}\n", br.be_kill_rate);
+    txt += &format!("残余血量（双方均幸存时） : {:.1} / {:.1}\n", br.you_alive_remain_hp, br.opp_alive_remain_hp);
+    txt += &format!("最终决战（10回合，胜/平/负） : {:.2} / {:.2} / {:.2}\n", br.fb_10_win, br.fb_10_draw, br.fb_10_lose);
+    txt += &format!("开战有利度 : {:.2}\n", br.challenge_advantage);
+
+    println!("{}", txt);
+}
 
 use actix_web::HttpResponse;
 use actix_web::{get, web, Result};
@@ -120,20 +147,20 @@ struct Opts {
 }
 
 
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
-    let opts: Opts = Opts::parse();
-    let port : u16 = opts.port.unwrap_or(8080);
-    use actix_web::{App, HttpServer};
+// #[actix_web::main]
+// async fn main() -> std::io::Result<()> {
+//     let opts: Opts = Opts::parse();
+//     let port : u16 = opts.port.unwrap_or(8080);
+//     use actix_web::{App, HttpServer};
 
-    println!("listening on : 0.0.0.0:{port}");
+//     println!("listening on : 0.0.0.0:{port}");
 
-    HttpServer::new(|| {
-        App::new()
-        .service(index)
-        .service(api)
-    })
-        .bind(("0.0.0.0", port))?
-        .run()
-        .await
-}
+//     HttpServer::new(|| {
+//         App::new()
+//         .service(index)
+//         .service(api)
+//     })
+//         .bind(("0.0.0.0", port))?
+//         .run()
+//         .await
+// }
