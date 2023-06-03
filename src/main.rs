@@ -25,10 +25,10 @@ fn main() {
     let mut buff2 = vec!();
     let mut bufft2 = vec!();
 
-    let hp = 4;
-    let atk = 1;
+    let hp = 5;
+    let atk = 0;
     let def = 0;
-    let evd = 1;
+    let evd = 0;
     let hpt = 5;
     let atkt = 0;
     let deft = 1;
@@ -47,6 +47,7 @@ fn main() {
     let input = BattleInput { hp, atk, def, evd, psv, buff, hpt, atkt, deft, evdt, psvt, bufft};
     let br = main_battle(&input);
     println!("{}", embellish(&input, &br));
+
     let input = BattleInput { hp, atk, def, evd, psv: psv2, buff :buff2, hpt, atkt, deft, evdt, psvt: psvt2, bufft: bufft2};
     let br = main_battle(&input);
     println!("{}", embellish(&input, &br));
