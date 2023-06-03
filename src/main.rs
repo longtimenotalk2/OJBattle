@@ -13,16 +13,17 @@ use oj::Passive;
 
 use art::embellish;
 
+#[allow(warnings)]
 fn main() {
-    let psv = None;
-    // let psv = Some(Passive::Tql);
-    // let psvt = None;
-    let psvt = Some(Passive::Tql);
 
-    // let buff = vec!();
-    let buff = vec!(Buff::Ext);
-    let bufft = vec!();
-    // let bufft = vec!(Buff::Ext);
+    let mut psv = None;
+    let mut psvt = None;
+    let mut buff = vec!();
+    let mut bufft = vec!();
+    let mut psv2 = None;
+    let mut psvt2 = None;
+    let mut buff2 = vec!();
+    let mut bufft2 = vec!();
 
     let hp = 4;
     let atk = 1;
@@ -33,21 +34,20 @@ fn main() {
     let deft = 1;
     let evdt = -3;
 
+    psv = Some(Passive::Iru);
+    psvt = Some(Passive::Tql);
+    // buff = vec!(Buff::Ext);
+    // bufft = vec!(Buff::Ext);
+
+    // psv2 = Some(Passive::Iru);
+    // psvt2 = Some(Passive::Tql);
+    // buff2 = vec!(Buff::Ext);
+    // bufft2 = vec!(Buff::Ext);
+
     let input = BattleInput { hp, atk, def, evd, psv, buff, hpt, atkt, deft, evdt, psvt, bufft};
     let br = main_battle(&input);
     println!("{}", embellish(&input, &br));
-
-    let psv = None;
-    // let psv = Some(Passive::Tql);
-    let psvt = None;
-    // let psvt = Some(Passive::Tql);
-
-    // let buff = vec!();
-    let buff = vec!(Buff::Ext);
-    let bufft = vec!();
-    // let bufft = vec!(Buff::Ext);
-
-    let input = BattleInput { hp, atk, def, evd, psv, buff, hpt, atkt, deft, evdt, psvt, bufft};
+    let input = BattleInput { hp, atk, def, evd, psv: psv2, buff :buff2, hpt, atkt, deft, evdt, psvt: psvt2, bufft: bufft2};
     let br = main_battle(&input);
     println!("{}", embellish(&input, &br));
 
