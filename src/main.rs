@@ -16,6 +16,9 @@ fn main() {
     // let psvt = None;
     let psvt = Some(Passive::Tql);
 
+    let buff = vec!();
+    let bufft = vec!();
+
     let hp = 4;
     let atk = 2;
     let def = 0;
@@ -31,11 +34,13 @@ fn main() {
         def,
         evd,
         psv,
+        &buff, 
         hpt,
         atkt,
         deft,
         evdt,
         psvt,
+        &bufft,
     );
 
     let mut txt = String::new();
@@ -58,11 +63,13 @@ fn main() {
         def,
         evd,
         psv,
+        &buff, 
         hpt,
         atkt,
         deft,
         evdt,
         psvt,
+        &bufft,
     );
     let mut txt = String::new();
     let psvstr = if let Some(ps) = psv {format!(" ({})", ps.str())} else {format!("")};

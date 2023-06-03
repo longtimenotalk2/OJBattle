@@ -26,17 +26,32 @@ impl Passive {
     }
 }
 
+#[derive(Deserialize, Debug, Clone, Copy)]
+pub enum Buff {
+    Ext,
+}
+
+impl Buff {
+    pub fn str(&self) -> &str {
+        match self {
+            Buff::Ext => "Ext",
+        }
+    }
+}
+
 pub fn main_battle(
     hp : i32,
     atk : i32,
     def : i32,
     evd : i32,
     psv : Option<Passive>,
+    buff : &Vec<Buff>,
     hpt : i32,
     atkt : i32,
     deft : i32,
     evdt : i32,
     mut psvt : Option<Passive>,
+    bufft : &Vec<Buff>,
 )  -> BattleResult {
 
     assert!(hp > 0);
@@ -48,7 +63,7 @@ pub fn main_battle(
     }
 
     // 单次开战
-    let once_result = battle_once(atk, hp, def, evd, psv, atkt, hpt, deft, evdt, psvt);
+    let once_result = battle_once(atk, hp, def, evd, psv, buff, atkt, hpt, deft, evdt, psvt, bufft);
 
     let kill_rate = (once_result.kill_rate * 100.0).round() / 100.0;
     let be_kill_rate = (once_result.be_kill_rate * 100.0).round() / 100.0;
@@ -56,13 +71,13 @@ pub fn main_battle(
     let opp_alive_remain_hp = (once_result.opp_alive_remain_hp * 10.0).round() / 10.0;
 
     // 最终决战
-    let (fbwin, fblose) = fb_10(atk, hp, def, evd, psv, atkt, hpt, deft, evdt, psvt);
+    let (fbwin, fblose) = fb_10(atk, hp, def, evd, psv, buff, atkt, hpt, deft, evdt, psvt, bufft);
     let fb_10_win = (fbwin * 100.0).round() / 100.0;
     let fb_10_lose = (fblose * 100.0).round() / 100.0;
     let fb_10_draw = (1.0 - fb_10_win - fb_10_lose).max(0.0);
 
     let decay = 0.5;
-    let result = fb_decay(atk, hp, def, evd, psv, atkt, hpt, deft, evdt, psvt, decay);
+    let result = fb_decay(atk, hp, def, evd, psv, buff, atkt, hpt, deft, evdt, psvt, bufft, decay);
     let r = result.last().unwrap().last().unwrap().0;
 
     let challenge_advantage = (r*100.0).round()/100.0;
@@ -86,11 +101,13 @@ fn fb_10(
     def : i32,
     evd : i32,
     mut psv : Option<Passive>,
+    buff : &Vec<Buff>,
     mut atkt : i32,
     mut hpt : i32,
     deft : i32,
     evdt : i32,
     psvt : Option<Passive>,
+    bufft : &Vec<Buff>,
 ) -> (f32, f32) {
 
     // 最终决战Iru只能射一次，改成减对面一血后取消之
@@ -136,7 +153,7 @@ fn fb_10(
                 if let Some(Passive::Tql) = psvt {
                     atktp += hpt - ht;
                 }
-                let hp_dist = onceatk(atktp, h, def, evd, psvt, psv);
+                let hp_dist = onceatk(atktp, h, def, evd, psvt, bufft, psv, buff);
                 let mut result = (0.0, 0.0);
                 for (hh, r) in hp_dist.data.iter().enumerate() {
                     result.0 += stat[hh][iht].0 * r;
@@ -158,7 +175,7 @@ fn fb_10(
                 if let Some(Passive::Tql) = psv {
                     atkp += hp - h;
                 }
-                let hp_distt = onceatk(atkp, ht, deft, evdt, psv, psvt);
+                let hp_distt = onceatk(atkp, ht, deft, evdt, psv, buff, psvt, bufft);
                 let mut result = (0.0, 0.0);
                 for (hht, r) in hp_distt.data.iter().enumerate() {
                     result.0 += stat[ih][hht].0 * r;
@@ -190,14 +207,16 @@ fn battle_once(
     def : i32,
     evd : i32,
     psv : Option<Passive>,
+    buff : &Vec<Buff>,
     atkt : i32,
     hpt : i32,
     deft : i32,
     evdt : i32,
     psvt : Option<Passive>,
+    bufft : &Vec<Buff>,
 ) -> ButtleOnceInfo {
 
-    let hp_distt = onceatk(atk, hpt, deft, evdt, psv, psvt);
+    let hp_distt = onceatk(atk, hpt, deft, evdt, psv, buff, psvt, bufft);
     let kill = *hp_distt.data.get(0).unwrap();
     let mut remain_hpt = 0. ;
     if (kill * 100.).round() as i32 != 100 {
@@ -207,14 +226,14 @@ fn battle_once(
         remain_hpt /= 1. - kill;
     }
 
-    let mut hp_dist = onceatk(atkt, hp, def, evd, psvt, psv);
+    let mut hp_dist = onceatk(atkt, hp, def, evd, psvt, bufft, psv, buff);
 
     if let Some(Passive::Tql) = psvt {
         if (kill * 100.).round() as i32 != 100 {
             hp_dist.data = vec![0.0];
             for (ht, r) in hp_distt.data.iter().enumerate() {
                 if ht != 0 {
-                    hp_dist += onceatk(atkt + hpt - (ht as i32), hp, def, evd, psvt, psv) * *r;
+                    hp_dist += onceatk(atkt + hpt - (ht as i32), hp, def, evd, psvt, bufft, psv, buff) * *r;
                 }
             }
             hp_dist = hp_dist * (1. / (1. - kill));
@@ -243,11 +262,13 @@ fn fb_decay(
     def : i32,
     evd : i32,
     psv : Option<Passive>,
+    buff : &Vec<Buff>,
     atkt : i32,
     hpt : i32,
     deft : i32,
     evdt : i32,
     psvt : Option<Passive>,
+    bufft : &Vec<Buff>,
     decay : f32,
 ) -> Vec<Vec<(f32, f32)>> {
 
@@ -273,8 +294,8 @@ fn fb_decay(
                     }
                 }
             }else{
-                let distt = onceatk(atk, ht, deft, evdt, psv, psvt);
-                let dist = onceatk(atkt, h, def, evd, psvt, psv); 
+                let distt = onceatk(atk, ht, deft, evdt, psv, buff, psvt, bufft);
+                let dist = onceatk(atkt, h, def, evd, psvt, bufft, psv, buff); 
                 let mut sumright = 0.0;
                 let mut cycler = 0.0;
                 for (hht, r) in distt.data.iter().enumerate() {
@@ -304,7 +325,7 @@ fn fb_decay(
                 let mut tql_c = vec!();
                 let mut tql_sl = vec!();
                 for aa in 1..(hpt - ht + 1) {
-                    let dist = onceatk(atkt + aa, h, def, evd, psvt, psv); 
+                    let dist = onceatk(atkt + aa, h, def, evd, psvt, bufft, psv, buff); 
                     let mut c = 0.0;
                     let mut sumleft = 0.0;
                     for (hh, r) in dist.data.iter().enumerate() {
@@ -342,12 +363,14 @@ fn onceatk(
     def : i32,
     evd : i32,
     psv : Option<Passive>,
+    buff : &Vec<Buff>,
     psvt : Option<Passive>,
+    bufft : &Vec<Buff>,
 ) -> HpDist {
     let mut result = HpDist::new();
     for dice in 1..7 {
         let a = 1.max(atk + dice);
-        result += oncebeatk(a, hp, def, evd, psv, psvt) * (1.0/6.0);
+        result += oncebeatk(a, hp, def, evd, psv, buff, psvt, bufft) * (1.0/6.0);
     }
     result
 }
@@ -358,10 +381,12 @@ fn oncebeatk(
     def : i32,
     evd : i32,
     psv : Option<Passive>,
+    buff : &Vec<Buff>,
     psvt : Option<Passive>,
+    bufft : &Vec<Buff>,
 ) -> HpDist {
-    let dresult = oncedef(a, hp, def, psv, psvt);
-    let eresult = onceevd(a, hp, evd, psv, psvt);
+    let dresult = oncedef(a, hp, def, psv, buff, psvt, bufft);
+    let eresult = onceevd(a, hp, evd, psv, buff, psvt, bufft);
     if dresult.alive_rate() > eresult.alive_rate() {
         dresult
     }else if dresult.alive_rate() < eresult.alive_rate() {
@@ -380,7 +405,9 @@ fn oncedef(
     hp : i32,
     def : i32,
     psv : Option<Passive>,
+    buff : &Vec<Buff>,
     _psvt : Option<Passive>,
+    bufft : &Vec<Buff>,
 ) -> HpDist {
     let mut result = HpDist::new();
     for dice in 1..7 {
@@ -402,7 +429,9 @@ fn onceevd(
     hp : i32,
     evd : i32,
     psv : Option<Passive>,
+    buff : &Vec<Buff>,
     _psvt : Option<Passive>,
+    bufft : &Vec<Buff>,
 ) -> HpDist {
     let mut result = HpDist::new();
     for dice in 1..7 {
