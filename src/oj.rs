@@ -26,7 +26,7 @@ impl Passive {
     }
 }
 
-#[derive(Deserialize, Debug, Clone, Copy)]
+#[derive(Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Buff {
     Ext,
 }
@@ -368,9 +368,13 @@ fn onceatk(
     bufft : &Vec<Buff>,
 ) -> HpDist {
     let mut result = HpDist::new();
-    for dice in 1..7 {
-        let a = 1.max(atk + dice);
-        result += oncebeatk(a, hp, def, evd, psv, buff, psvt, bufft) * (1.0/6.0);
+    let mut use_dice = Dice::D1;
+    if buff.contains(&Buff::Ext) {
+        use_dice = Dice::F6;
+    }
+    for (point, r) in use_dice.get_dist() {
+        let a = 1.max(atk + point);
+        result += oncebeatk(a, hp, def, evd, psv, buff, psvt, bufft) * r;
     }
     result
 }
@@ -407,11 +411,15 @@ fn oncedef(
     psv : Option<Passive>,
     buff : &Vec<Buff>,
     _psvt : Option<Passive>,
-    bufft : &Vec<Buff>,
+    _bufft : &Vec<Buff>,
 ) -> HpDist {
     let mut result = HpDist::new();
-    for dice in 1..7 {
-        let d = 1.max(def + dice);
+    let mut use_dice = Dice::D1;
+    if buff.contains(&Buff::Ext) {
+        use_dice = Dice::F6;
+    }
+    for (point, r) in use_dice.get_dist() {
+        let d = 1.max(def + point);
         let mut dmg = 1.max(a - d);
 
         if let Some(Passive::Iru) = psv {
@@ -419,7 +427,7 @@ fn oncedef(
         }
         
         let hp_remain = 0.max(hp - dmg);
-        result.insert(hp_remain, 1.0/6.0);
+        result.insert(hp_remain, r);
     }
     result
 }
@@ -431,11 +439,15 @@ fn onceevd(
     psv : Option<Passive>,
     buff : &Vec<Buff>,
     _psvt : Option<Passive>,
-    bufft : &Vec<Buff>,
+    _bufft : &Vec<Buff>,
 ) -> HpDist {
     let mut result = HpDist::new();
-    for dice in 1..7 {
-        let e = 1.max(evd + dice);
+    let mut use_dice = Dice::D1;
+    if buff.contains(&Buff::Ext) {
+        use_dice = Dice::F6;
+    }
+    for (point, r) in use_dice.get_dist() {
+        let e = 1.max(evd + point);
         let mut hp_remain = hp;
         let mut dmg = if e <= a {a} else {0};
 
@@ -444,9 +456,29 @@ fn onceevd(
         }
         
         hp_remain = 0.max(hp_remain - dmg);
-        result.insert(hp_remain, 1.0/6.0);
+        result.insert(hp_remain, r);
     }
     result
+}
+
+enum Dice {
+    D1,
+    F6,
+}
+
+impl Dice {
+    fn get_dist(&self) -> Vec<(i32, f32)> {
+        match self {
+            Dice::D1 => {
+                let mut r = vec!();
+                for i in 1..7 {
+                    r.push((i, 1.0/6.0));
+                }
+                r
+            },
+            Dice::F6 => vec!((6, 1.0)),
+        }
+    }
 }
 
 #[derive(Clone, Debug)]

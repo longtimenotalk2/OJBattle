@@ -7,7 +7,7 @@
 
 
 pub mod oj;
-use crate::oj::{main_battle};
+use crate::oj::{main_battle, Buff};
 use oj::Passive;
 
 fn main() {
@@ -16,17 +16,17 @@ fn main() {
     // let psvt = None;
     let psvt = Some(Passive::Tql);
 
-    let buff = vec!();
-    let bufft = vec!();
+    let buff = vec!(Buff::Ext);
+    let bufft = vec!(Buff::Ext);
 
-    let hp = 4;
-    let atk = 2;
+    let hp = 3;
+    let atk = 1;
     let def = 0;
     let evd = 0;
-    let hpt = 5;
-    let atkt = 0;
-    let deft = 1;
-    let evdt = -3;
+    let hpt = 3;
+    let atkt = 1;
+    let deft = 0;
+    let evdt = 0;
 
     let br = main_battle(
         hp,
@@ -46,7 +46,19 @@ fn main() {
     let mut txt = String::new();
     let psvstr = if let Some(ps) = psv {format!(" ({})", ps.str())} else {format!("")};
     let psvtstr = if let Some(pst) = psvt {format!(" ({})", pst.str())} else {format!("")};
-    txt += &format!("【{}{}{}{}{} vs {}{}{}{}{}】 （Hp/Atk/Def/Evd）\n", hp, atk, def, evd, psvstr, hpt, atkt, deft, evdt, psvtstr);
+    let mut buffstr = String::new();
+    for b in &buff {
+        buffstr += " {";
+        buffstr += b.str();
+        buffstr += "}";
+    }
+    let mut bufftstr = String::new();
+    for b in &bufft {
+        bufftstr += " {";
+        bufftstr += b.str();
+        bufftstr += "}";
+    }
+    txt += &format!("【{}{}{}{}{}{} vs {}{}{}{}{}{}】 （Hp/Atk/Def/Evd）\n", hp, atk, def, evd, psvstr, buffstr, hpt, atkt, deft, evdt, psvtstr, bufftstr);
     txt += &format!("击杀率 : {:.2}\n", br.kill_rate);
     txt += &format!("反杀率 : {:.2}\n", br.be_kill_rate);
     txt += &format!("残余血量（双方均幸存时） : {:.1} / {:.1}\n", br.you_alive_remain_hp, br.opp_alive_remain_hp);
@@ -74,7 +86,19 @@ fn main() {
     let mut txt = String::new();
     let psvstr = if let Some(ps) = psv {format!(" ({})", ps.str())} else {format!("")};
     let psvtstr = if let Some(pst) = psvt {format!(" ({})", pst.str())} else {format!("")};
-    txt += &format!("【{}{}{}{}{} vs {}{}{}{}{}】 （Hp/Atk/Def/Evd）\n", hp, atk, def, evd, psvstr, hpt, atkt, deft, evdt, psvtstr);
+    let mut buffstr = String::new();
+    for b in &buff {
+        buffstr += " {";
+        buffstr += b.str();
+        buffstr += "}";
+    }
+    let mut bufftstr = String::new();
+    for b in &bufft {
+        bufftstr += " {";
+        bufftstr += b.str();
+        bufftstr += "}";
+    }
+    txt += &format!("【{}{}{}{}{}{} vs {}{}{}{}{}{}】 （Hp/Atk/Def/Evd）\n", hp, atk, def, evd, psvstr, buffstr, hpt, atkt, deft, evdt, psvtstr, bufftstr);
     txt += &format!("击杀率 : {:.2}\n", br.kill_rate);
     txt += &format!("反杀率 : {:.2}\n", br.be_kill_rate);
     txt += &format!("残余血量（双方均幸存时） : {:.1} / {:.1}\n", br.you_alive_remain_hp, br.opp_alive_remain_hp);
