@@ -90,7 +90,7 @@ fn fb_10(
     mut hpt : i32,
     deft : i32,
     evdt : i32,
-    mut psvt : Option<Passive>,
+    psvt : Option<Passive>,
 ) -> (f32, f32) {
 
     // 最终决战Iru只能射一次，改成减对面一血后取消之
@@ -189,12 +189,12 @@ fn battle_once(
     hp : i32,
     def : i32,
     evd : i32,
-    mut psv : Option<Passive>,
+    psv : Option<Passive>,
     atkt : i32,
-    mut hpt : i32,
+    hpt : i32,
     deft : i32,
     evdt : i32,
-    mut psvt : Option<Passive>,
+    psvt : Option<Passive>,
 ) -> ButtleOnceInfo {
 
     let hp_distt = onceatk(atk, hpt, deft, evdt, psv, psvt);
@@ -242,12 +242,12 @@ fn fb_decay(
     hp : i32,
     def : i32,
     evd : i32,
-    mut psv : Option<Passive>,
+    psv : Option<Passive>,
     atkt : i32,
     hpt : i32,
     deft : i32,
     evdt : i32,
-    mut psvt : Option<Passive>,
+    psvt : Option<Passive>,
     decay : f32,
 ) -> Vec<Vec<(f32, f32)>> {
 

@@ -16,14 +16,14 @@ fn main() {
     // let psvt = None;
     let psvt = Some(Passive::Tql);
 
-    let hp = 9;
-    let atk = 0;
+    let hp = 4;
+    let atk = 2;
     let def = 0;
     let evd = 0;
     let hpt = 5;
     let atkt = 0;
-    let deft = 0;
-    let evdt = 0;
+    let deft = 1;
+    let evdt = -3;
 
     let br = main_battle(
         hp,
