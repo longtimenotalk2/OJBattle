@@ -14,12 +14,14 @@ pub struct BattleResult {
 #[derive(Deserialize, Debug, Clone, Copy)]
 pub enum Passive {
     Iru,
+    Tql,
 }
 
 impl Passive {
     pub fn str(&self) -> &str {
         match self {
             Passive::Iru => "Iru",
+            Passive::Tql => "Tql",
         }
     }
 }
@@ -34,11 +36,16 @@ pub fn main_battle(
     atkt : i32,
     deft : i32,
     evdt : i32,
-    psvt : Option<Passive>,
+    mut psvt : Option<Passive>,
 )  -> BattleResult {
 
     assert!(hp > 0);
     assert!(hpt > 0);
+
+    // Iru如是后手，取消之
+    if let Some(Passive::Iru) = psvt {
+        psvt = None;
+    }
 
     // 单次开战
     let once_result = battle_once(atk, hp, def, evd, psv, atkt, hpt, deft, evdt, psvt);
@@ -79,27 +86,20 @@ fn fb_10(
     def : i32,
     evd : i32,
     mut psv : Option<Passive>,
-    atkt : i32,
+    mut atkt : i32,
     mut hpt : i32,
     deft : i32,
     evdt : i32,
     mut psvt : Option<Passive>,
 ) -> (f32, f32) {
 
-    if let Some(ps) = psv {
-        match ps {
-            Passive::Iru => {
-                hpt -= 1;
-                psv = None;
-            },
-        }
-    }
-
-    if let Some(pst) = psvt {
-        match pst {
-            Passive::Iru => {
-                psvt = None;
-            },
+    // 最终决战Iru只能射一次，改成减对面一血后取消之
+    if let Some(Passive::Iru) = psv {
+        hpt -= 1;
+        psv = None;
+        // 如果此时后手刚好是船长，则直接+1攻
+        if let Some(Passive::Tql) = psvt {
+            atkt += 1;
         }
     }
     
@@ -130,7 +130,13 @@ fn fb_10(
             let ih : usize = h.try_into().unwrap();
             for ht in 1..hpt+1 {
                 let iht : usize = ht.try_into().unwrap();
-                let hp_dist = onceatk(atkt, h, def, evd, psvt, psv);
+                let mut atktp = atkt;
+
+                // 船长会根据已损失血量加攻
+                if let Some(Passive::Tql) = psvt {
+                    atktp += hpt - ht;
+                }
+                let hp_dist = onceatk(atktp, h, def, evd, psvt, psv);
                 let mut result = (0.0, 0.0);
                 for (hh, r) in hp_dist.data.iter().enumerate() {
                     result.0 += stat[hh][iht].0 * r;
@@ -146,7 +152,13 @@ fn fb_10(
             let ih : usize = h.try_into().unwrap();
             for ht in 1..hpt+1 {
                 let iht : usize = ht.try_into().unwrap();
-                let hp_distt = onceatk(atk, ht, deft, evdt, psv, psvt);
+                let mut atkp = atk;
+
+                // 船长会根据已损失血量加攻
+                if let Some(Passive::Tql) = psv {
+                    atkp += hp - h;
+                }
+                let hp_distt = onceatk(atkp, ht, deft, evdt, psv, psvt);
                 let mut result = (0.0, 0.0);
                 for (hht, r) in hp_distt.data.iter().enumerate() {
                     result.0 += stat[ih][hht].0 * r;
@@ -177,21 +189,13 @@ fn battle_once(
     hp : i32,
     def : i32,
     evd : i32,
-    psv : Option<Passive>,
+    mut psv : Option<Passive>,
     atkt : i32,
-    hpt : i32,
+    mut hpt : i32,
     deft : i32,
     evdt : i32,
     mut psvt : Option<Passive>,
 ) -> ButtleOnceInfo {
-
-    if let Some(pst) = psvt {
-        match pst {
-            Passive::Iru => {
-                psvt = None;
-            },
-        }
-    }
 
     let hp_distt = onceatk(atk, hpt, deft, evdt, psv, psvt);
     let kill = *hp_distt.data.get(0).unwrap();
@@ -225,7 +229,7 @@ fn fb_decay(
     hp : i32,
     def : i32,
     evd : i32,
-    psv : Option<Passive>,
+    mut psv : Option<Passive>,
     atkt : i32,
     hpt : i32,
     deft : i32,
@@ -234,22 +238,27 @@ fn fb_decay(
     decay : f32,
 ) -> Vec<Vec<(f32, f32)>> {
 
-    if let Some(pst) = psvt {
-        match pst {
-            Passive::Iru => {
-                psvt = None;
-            },
-        }
-    }
     
     let mut result : Vec<Vec<(f32, f32)>> = vec!();
+
+    // 船长专用数据
+    let mut tql : Vec<Vec<Vec<f32>>> = vec!();
+    
     for h in 0..(hp+1) {
         let ih : usize = h.try_into().unwrap();
         result.push(vec!());
+        tql.push(vec!());
         for ht in 0..(hpt+1) {
+            tql[ih].push(vec!());
             let iht : usize = ht.try_into().unwrap();
             if h * ht == 0 {
                 result[ih].push((-2.0, 1.0));
+                // 船长专用数据
+                if let Some(Passive::Tql) = psvt {
+                    for _ in 0..hpt {
+                        tql[ih][iht].push(1.0);
+                    }
+                }
             }else{
                 let distt = onceatk(atk, ht, deft, evdt, psv, psvt);
                 let dist = onceatk(atkt, h, def, evd, psvt, psv); 
@@ -259,7 +268,13 @@ fn fb_decay(
                     if hht == iht {
                         cycler = *r;
                     }else{
-                        sumright += r * result[ih][hht].1;
+                        let mut adder = r * result[ih][hht].1;
+                        // 船长映射到船长数据
+                        if let Some(Passive::Tql) = psvt {
+                            let index : usize = iht - hht - 1;
+                            adder = r * tql[ih][hht][index];
+                        }
+                        sumright += adder;
                     }
                 }
                 let mut sumleft = 0.0;
@@ -271,10 +286,36 @@ fn fb_decay(
                         sumleft += r * result[hh][iht].0;
                     }
                 }
-                // left = sumright + cycler*right; right = decay * (sumleft + cyclel*left)
+
+                // 船长多种sumleft可能性
+                let mut tql_c = vec!();
+                let mut tql_sl = vec!();
+                for aa in 1..(hpt - ht + 1) {
+                    let dist = onceatk(atkt + aa, h, def, evd, psvt, psv); 
+                    let mut c = 0.0;
+                    let mut sumleft = 0.0;
+                    for (hh, r) in dist.data.iter().enumerate() {
+                        if hh == ih {
+                            c = *r;
+                        }else{
+                            sumleft += r * result[hh][iht].0;
+                        }
+                    }
+                    tql_c.push(c);
+                        tql_sl.push(sumleft);
+                }
+                
+                // left = sumright + cycler*right
+                // right = decay * (sumleft + cyclel*left)
                 let left = (sumright + cycler * decay * sumleft) / (1.0 - cycler * decay * cyclel);
                 let right = decay * (sumleft + cyclel * left);
                 result[ih].push((left, right));
+
+                // 船长多种right可能性
+                for i in 0..tql_sl.len() {
+                    let right = decay * (tql_sl[i] + tql_c[i] * left);
+                    tql[ih][iht].push(right);
+                }
             }
         }
     }
@@ -400,6 +441,13 @@ impl HpDist {
         let i : usize = hp.try_into().unwrap();
         *self.data.get_mut(i).unwrap() += rate;
     }
+
+    // fn show(&self) {
+    //     for (i, r) in self.data.iter().enumerate() {
+    //         let num = (r * 100.).round() / 100.0;
+    //         println!("{} : {:.2}", i, num);
+    //     }
+    // }
 }
 
 impl std::ops::Mul<f32> for HpDist {
