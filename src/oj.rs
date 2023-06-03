@@ -1,5 +1,18 @@
-use serde::Deserialize;
 
+pub struct BattleInput {
+    pub hp : i32,
+    pub atk : i32,
+    pub def : i32,
+    pub evd : i32,
+    pub psv : Option<Passive>,
+    pub buff : Vec<Buff>,
+    pub hpt : i32,
+    pub atkt : i32,
+    pub deft : i32,
+    pub evdt : i32,
+    pub psvt : Option<Passive>,
+    pub bufft : Vec<Buff>,
+}
 pub struct BattleResult {
     pub kill_rate : f32,
     pub be_kill_rate : f32,
@@ -11,7 +24,7 @@ pub struct BattleResult {
     pub challenge_advantage : f32,
 }
 
-#[derive(Deserialize, Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub enum Passive {
     Iru,
     Tql,
@@ -26,7 +39,7 @@ impl Passive {
     }
 }
 
-#[derive(Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Buff {
     Ext,
 }
@@ -39,20 +52,19 @@ impl Buff {
     }
 }
 
-pub fn main_battle(
-    hp : i32,
-    atk : i32,
-    def : i32,
-    evd : i32,
-    psv : Option<Passive>,
-    buff : &Vec<Buff>,
-    hpt : i32,
-    atkt : i32,
-    deft : i32,
-    evdt : i32,
-    mut psvt : Option<Passive>,
-    bufft : &Vec<Buff>,
-)  -> BattleResult {
+pub fn main_battle (input : &BattleInput) -> BattleResult {
+    let hp = input.hp;
+    let atk = input.atk;
+    let def = input.def;
+    let evd = input.evd;
+    let psv = input.psv;
+    let buff = &input.buff;
+    let hpt = input.hpt;
+    let atkt = input.atkt;
+    let deft = input.deft;
+    let evdt = input.evdt;
+    let mut psvt = input.psvt;
+    let bufft = &input.bufft;
 
     assert!(hp > 0);
     assert!(hpt > 0);
@@ -63,7 +75,7 @@ pub fn main_battle(
     }
 
     // 单次开战
-    let once_result = battle_once(atk, hp, def, evd, psv, buff, atkt, hpt, deft, evdt, psvt, bufft);
+    let once_result = battle_once(atk, hp, def, evd, psv, &buff, atkt, hpt, deft, evdt, psvt, &bufft);
 
     let kill_rate = (once_result.kill_rate * 100.0).round() / 100.0;
     let be_kill_rate = (once_result.be_kill_rate * 100.0).round() / 100.0;
@@ -71,13 +83,13 @@ pub fn main_battle(
     let opp_alive_remain_hp = (once_result.opp_alive_remain_hp * 10.0).round() / 10.0;
 
     // 最终决战
-    let (fbwin, fblose) = fb_10(atk, hp, def, evd, psv, buff, atkt, hpt, deft, evdt, psvt, bufft);
+    let (fbwin, fblose) = fb_10(atk, hp, def, evd, psv, &buff, atkt, hpt, deft, evdt, psvt, &bufft);
     let fb_10_win = (fbwin * 100.0).round() / 100.0;
     let fb_10_lose = (fblose * 100.0).round() / 100.0;
     let fb_10_draw = (1.0 - fb_10_win - fb_10_lose).max(0.0);
 
     let decay = 0.5;
-    let result = fb_decay(atk, hp, def, evd, psv, buff, atkt, hpt, deft, evdt, psvt, bufft, decay);
+    let result = fb_decay(atk, hp, def, evd, psv, &buff, atkt, hpt, deft, evdt, psvt, &bufft, decay);
     let r = result.last().unwrap().last().unwrap().0;
 
     let challenge_advantage = (r*100.0).round()/100.0;
@@ -409,13 +421,13 @@ fn oncedef(
     hp : i32,
     def : i32,
     psv : Option<Passive>,
-    buff : &Vec<Buff>,
+    _buff : &Vec<Buff>,
     _psvt : Option<Passive>,
-    _bufft : &Vec<Buff>,
+    bufft : &Vec<Buff>,
 ) -> HpDist {
     let mut result = HpDist::new();
     let mut use_dice = Dice::D1;
-    if buff.contains(&Buff::Ext) {
+    if bufft.contains(&Buff::Ext) {
         use_dice = Dice::F6;
     }
     for (point, r) in use_dice.get_dist() {
@@ -437,13 +449,13 @@ fn onceevd(
     hp : i32,
     evd : i32,
     psv : Option<Passive>,
-    buff : &Vec<Buff>,
+    _buff : &Vec<Buff>,
     _psvt : Option<Passive>,
-    _bufft : &Vec<Buff>,
+    bufft : &Vec<Buff>,
 ) -> HpDist {
     let mut result = HpDist::new();
     let mut use_dice = Dice::D1;
-    if buff.contains(&Buff::Ext) {
+    if bufft.contains(&Buff::Ext) {
         use_dice = Dice::F6;
     }
     for (point, r) in use_dice.get_dist() {
