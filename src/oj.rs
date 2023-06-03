@@ -28,6 +28,7 @@ pub struct BattleResult {
 pub enum Passive {
     Iru,
     Tql,
+    Sherry,
 }
 
 impl Passive {
@@ -35,6 +36,7 @@ impl Passive {
         match self {
             Passive::Iru => "Iru",
             Passive::Tql => "Tql",
+            Passive::Sherry => "Sherry",
         }
     }
 }
@@ -53,18 +55,18 @@ impl Buff {
 }
 
 pub fn main_battle (input : &BattleInput) -> BattleResult {
-    let hp = input.hp;
-    let atk = input.atk;
-    let def = input.def;
-    let evd = input.evd;
-    let psv = input.psv;
-    let buff = &input.buff;
-    let hpt = input.hpt;
-    let atkt = input.atkt;
-    let deft = input.deft;
-    let evdt = input.evdt;
+    let mut hp = input.hp;
+    let mut atk = input.atk;
+    let mut def = input.def;
+    let mut evd = input.evd;
+    let mut psv = input.psv;
+    let mut buff = &input.buff;
+    let mut hpt = input.hpt;
+    let mut atkt = input.atkt;
+    let mut deft = input.deft;
+    let mut evdt = input.evdt;
     let mut psvt = input.psvt;
-    let bufft = &input.bufft;
+    let mut bufft = &input.bufft;
 
     assert!(hp > 0);
     assert!(hpt > 0);
@@ -72,6 +74,36 @@ pub fn main_battle (input : &BattleInput) -> BattleResult {
     // Iru如是后手，取消之
     if let Some(Passive::Iru) = psvt {
         psvt = None;
+    }
+
+    let mut inverse = false;
+
+    // 如果先手是雪莉且后手不是，则需要调转双方的属性，计算完后结果取反
+    if let Some(Passive::Sherry) = psv {
+        if let Some(Passive::Sherry) = psvt {}else{
+            inverse = true;
+
+            let t_hp = hp;
+            let t_atk = atk;
+            let t_def = def;
+            let t_evd = evd;
+            let t_psv = psv;
+            let t_buff = buff;
+
+            hp = hpt;
+            atk = atkt;
+            def = deft;
+            evd = evdt;
+            psv = psvt;
+            buff = bufft;
+
+            hpt = t_hp;
+            atkt = t_atk;
+            deft = t_def;
+            evdt = t_evd;
+            psvt = t_psv;
+            bufft = t_buff;
+        }
     }
 
     // 单次开战
@@ -94,16 +126,28 @@ pub fn main_battle (input : &BattleInput) -> BattleResult {
 
     let challenge_advantage = (r*100.0).round()/100.0;
 
-    BattleResult{
-        kill_rate,
-        be_kill_rate,
-        you_alive_remain_hp,
-        opp_alive_remain_hp,
-        fb_10_win,
-        fb_10_draw,
-        fb_10_lose,
-        challenge_advantage,
-        
+    if inverse {
+        BattleResult{
+            kill_rate : be_kill_rate,
+            be_kill_rate : kill_rate,
+            you_alive_remain_hp : opp_alive_remain_hp,
+            opp_alive_remain_hp : you_alive_remain_hp,
+            fb_10_win : fb_10_lose,
+            fb_10_draw,
+            fb_10_lose : fb_10_win,
+            challenge_advantage : - challenge_advantage,
+        }
+    }else{
+        BattleResult{
+            kill_rate,
+            be_kill_rate,
+            you_alive_remain_hp,
+            opp_alive_remain_hp,
+            fb_10_win,
+            fb_10_draw,
+            fb_10_lose,
+            challenge_advantage,
+        }
     }
 }
 

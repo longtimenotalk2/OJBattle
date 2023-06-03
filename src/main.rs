@@ -8,6 +8,7 @@
 
 pub mod oj;
 pub mod art;
+#[allow(unused_imports)]
 use crate::oj::{main_battle, Buff, BattleInput};
 use oj::Passive;
 
@@ -26,16 +27,16 @@ fn main() {
     let mut bufft2 = vec!();
 
     let hp = 5;
-    let atk = 0;
-    let def = 0;
-    let evd = 0;
-    let hpt = 5;
-    let atkt = 0;
-    let deft = 1;
-    let evdt = -3;
+    let atk = 1;
+    let def = 1;
+    let evd = 1;
+    let hpt = 4;
+    let atkt = 2;
+    let deft = 0;
+    let evdt = 0;
 
-    psv = Some(Passive::Iru);
-    psvt = Some(Passive::Tql);
+    psv = Some(Passive::Sherry);
+    // psvt = Some(Passive::Sherry);
     // buff = vec!(Buff::Ext);
     // bufft = vec!(Buff::Ext);
 
@@ -49,6 +50,7 @@ fn main() {
     println!("{}", embellish(&input, &br));
 
     let input = BattleInput { hp, atk, def, evd, psv: psv2, buff :buff2, hpt, atkt, deft, evdt, psvt: psvt2, bufft: bufft2};
+    // let input = BattleInput { hp : hpt, atk : atkt, def : deft, evd : evdt, psv : psvt2, buff : bufft2, hpt : hp, atkt : atk, deft : def, evdt : evd, psvt : psv2, bufft : buff2 };
     let br = main_battle(&input);
     println!("{}", embellish(&input, &br));
 
