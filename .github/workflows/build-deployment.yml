@@ -1,0 +1,40 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+    - uses: actions/checkout@v2
+    
+    - name: Install Rust
+    - uses: actions-rs/toolchain@v1
+    with:
+        toolchain: stable
+    
+    - name: Build binary
+    - uses: actions-rs/cargo@v1
+    with:
+        command: build
+        args: --release --all-features
+
+    - name: Deploy to Staging server
+      uses: easingthemes/ssh-deploy@main
+      env:
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        ARGS: "-rlgoDzvc -i"
+        REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+        REMOTE_USER: ${{ secrets.REMOTE_USER }}
+        REMOTE_PORT: ${{ secrets.REMOTE_PORT }}
+        SOURCE: "./target/release/ojbattle"
+        TARGET: ${{ secrets.REMOTE_TARGET }}
