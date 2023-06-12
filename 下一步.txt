@@ -1,0 +1,21 @@
+{
+    "offensive":{
+        "stats":{
+            "atk":0,
+            "def":0,
+            "evd":0,
+            "hp":5
+        },
+        "passive":["iru"],
+        "buff":["acc","spec"]
+    }
+    ,
+    "defensive":{
+        "stats":{
+            "atk":1,
+            "def":1,
+            "evd":1,
+            "hp":5
+        }
+    }
+}
